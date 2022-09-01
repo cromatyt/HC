@@ -1,0 +1,24 @@
+---
+
+- name: Restart chrony
+  service:
+    name: chronyd
+    state: restarted
+    enabled: yes
+
+- name: Restart firewalld
+  service:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Restart crio
+  service:
+    name: crio
+    state: restarted
+    enabled: yes
+
+- name: Enable kubelet
+  service:
+    name: kubelet
+    enabled: yes

@@ -1,0 +1,13 @@
+---
+
+- name: Reload firewalld
+  service:
+    name: firewalld
+    state: reloaded
+
+- name: Start consul
+  systemd:
+    name: consul
+    state: started
+    enabled: yes
+    daemon_reload: yes

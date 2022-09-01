@@ -1,0 +1,44 @@
+---
+
+- name: Add Hashicorp repo
+  yum_repository:
+    name: hashicorp
+    description: Hashicorp Stable - $basearch
+    baseurl: https://rpm.releases.hashicorp.com/RHEL/$releasever/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://rpm.releases.hashicorp.com/gpg
+    enabled: yes
+
+- name: Install nomad package
+  package:
+    name: nomad
+    state: present
+  #notify: Start nomad
+
+- name: Configure nomad
+  template:
+    src: nomad.hcl.j2
+    dest: "{{ nomad_config_dir }}/nomad.hcl"
+    owner: nomad
+    group: nomad
+    mode: 0644
+
+- name: Start nomad service
+  systemd:
+    name: nomad
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  #when: nomad_server_count != 1 and hostvars[inventory_hostname]['ansible_default_ipv4']['address'] == nomad_first_server
+
+- name: Wating 15s
+  command: sleep 15
+
+- name: Nomad join
+  command: "nomad server join {{ nomad_first_server }}:4648"
+  when: hostvars[inventory_hostname]['ansible_default_ipv4']['address'] != nomad_first_server
+
+# nomad agent -dev -bind 0.0.0.0 -log-level=INFO
+# http://192.168.122.52:4646/ui/jobs
+# nomad job stop -purge <job>
+# nomad system gc

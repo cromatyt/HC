@@ -1,0 +1,18 @@
+# Full configuration options can be found at https://www.nomadproject.io/docs/configuration
+
+data_dir = "{{ nomad_data_dir }}"
+bind_addr = "{{ nomad_bind }}"
+region = "{{ nomad_region }}"
+datacenter = "{{ nomad_dc_name }}"
+
+server {
+  # license_path is required as of Nomad v1.1.1+
+  #license_path = "{{ nomad_config_dir }}/nomad.hcl"
+  enabled = true
+  #bootstrap_expect = 1 #{{ nomad_server_count }}
+}
+
+client {
+  enabled = true
+  servers = ["127.0.0.1"]
+}

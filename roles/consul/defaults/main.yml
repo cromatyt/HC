@@ -1,0 +1,11 @@
+---
+
+timezone: "Europe/Paris"
+
+consul_ui: true
+consul_client_bind: true
+consul_addr_bind: true
+
+consul_config_dir: /etc/consul.d
+consul_data_dir: /opt/consul
+consul_dc_name: dc1

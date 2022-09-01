@@ -1,0 +1,13 @@
+---
+
+- name: Reload firewalld
+  service:
+    name: firewalld
+    state: reloaded
+
+- name: Start nomad
+  systemd:
+    name: nomad
+    state: started
+    enabled: yes
+    daemon_reload: yes

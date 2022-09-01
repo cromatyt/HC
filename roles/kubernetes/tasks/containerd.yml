@@ -1,0 +1,40 @@
+---
+
+- name: Get latest containerd version
+  uri:
+    url: https://api.github.com/repos/containerd/containerd/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: containerd_version
+
+- set_fact:
+    containerd_tag: "{{ containerd_version['json']['tag_name'][1:] }}"
+
+- name: Create load modules conf at bootup
+  copy:
+    src: cni.conf
+    dest: /etc/modules-load.d/crio.conf
+    owner: root
+    group: root
+
+- name: Get containerd
+  get_url:
+    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_tag }}/cri-containerd-cni-{{ containerd_tag }}-linux-amd64.tar.gz"
+    dest: "/tmp/cri-containerd-cni-{{ containerd_tag }}-linux-amd64.tar.gz"
+    mode: 0644
+
+- name: Install containerd
+  shell: "tar --no-overwrite-dir -C / -xzf /tmp/cri-containerd-cni-{{ containerd_tag }}-linux-amd64.tar.gz"
+
+- name: Start containerd
+  service:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: remove tmp file
+  file:
+    path: "/tmp/cri-containerd-cni-{{ containerd_tag }}-linux-amd64.tar.gz"
+    state: absent

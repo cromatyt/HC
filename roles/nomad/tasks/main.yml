@@ -1,0 +1,16 @@
+---
+
+- include_tasks: set_facts.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: pre_install.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: chrony.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: firewalld.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: docker.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: kernel_module.yml
+  when: inventory_hostname in groups['nomad_server']
+- include_tasks: install.yml
+  when: inventory_hostname in groups['nomad_server']

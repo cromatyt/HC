@@ -1,0 +1,9 @@
+---
+
+- name: Set nomad vars
+  set_fact:
+    nomad_node_name: "{{ ansible_hostname }}"
+    nomad_type: server
+    nomad_first_server: "{{ groups['nomad_server'][0] }}"
+    nomad_server_count: "{{ groups['nomad_server'] | length }}"
+  when: inventory_hostname in groups['nomad_server']

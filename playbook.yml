@@ -1,0 +1,15 @@
+- name: kubernetes
+  hosts:
+    - k8s_masters
+    - k8s_nodes
+    #- nomad_server
+    #- consul_server
+    #- boundary
+  remote_user: root
+  become: yes
+  roles:
+    #- roles/test
+    #- roles/nomad
+    #- roles/consul
+    - roles/kubernetes
+    #- roles/boundary

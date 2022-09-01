@@ -1,0 +1,23 @@
+---
+
+- name: Set server vars
+  set_fact:
+    consul_node_name: "{{ ansible_hostname }}"
+    consul_type: server
+    consul_server_count: "{{ groups['consul_server'] | length }}"
+    consul_first_server: "{{ groups['consul_server'][0] }}"
+    consul_join_list: >-
+      {%- set consul_join_list = [] -%}
+        {%- for server in groups['consul_server'] -%}
+          {%- if server != ansible_default_ipv4['address'] -%}
+            {{ consul_join_list.append('"' + server + '"') }}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ consul_join_list | join(',')}}
+  when: inventory_hostname in groups['consul_server']
+
+- name: Set client vars
+  set_fact:
+    consul_node_name: "{{ ansible_hostname }}"
+    consul_type: client
+  when: inventory_hostname in groups['consul_client']

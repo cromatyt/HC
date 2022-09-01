@@ -1,0 +1,11 @@
+---
+
+- include_tasks: set_facts.yml
+- include_tasks: pre_install.yml
+- include_tasks: chrony.yml
+- include_tasks: firewalld.yml
+- include_tasks: hosts.yml
+- include_tasks: install.yml
+- include_tasks: encrypt_ca.yml
+  when: ansible_default_ipv4['address'] == consul_first_server
+- include_tasks: cert_join.yml

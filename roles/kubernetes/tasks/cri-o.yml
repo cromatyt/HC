@@ -1,0 +1,63 @@
+---
+
+#- name: Get services facts
+#  service_facts:
+
+#- name: Get latest release of cri-o
+#  local_action:
+#    module: github_release
+#    user: cri-o
+#    repo: cri-o
+#    action: latest_release
+#  become: false
+#  register: crio_version
+#  #when: ansible_facts.services["crio.service"].state != "running"
+#  when: "'crio.service' not in services"
+
+- name: Get latest cri-o version
+  uri:
+    url: https://api.github.com/repos/cri-o/cri-o/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: crio_version
+
+- set_fact:
+    crio_tag: "{{ crio_version['json']['tag_name'][1:-2] }}"
+
+- name: Add libcontainers_stable repo
+  yum_repository:
+    name: libcontainers_stable
+    description: Stable Releases of Upstream github.com/containers packages
+    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/
+    gpgcheck: yes
+    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/repodata/repomd.xml.key
+    enabled: yes
+
+- name: Add libcontainers_stable_cri-o repo
+  yum_repository:
+    name: libcontainers_stable_cri-o
+    description: Last release available
+    baseurl: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_tag }}/CentOS_8/
+    gpgcheck: yes
+    gpgkey: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_tag }}/CentOS_8/repodata/repomd.xml.key
+    enabled: yes
+
+- name: Create load modules conf at bootup
+  copy:
+    src: cni.conf
+    dest: /etc/modules-load.d/crio.conf
+    owner: root
+    group: root
+
+- name: Install cri-o
+  package:
+    name: cri-o
+    state: latest
+
+- name: Start crio
+  service:
+    name: crio
+    state: started
+    enabled: yes

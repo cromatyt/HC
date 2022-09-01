@@ -1,0 +1,25 @@
+---
+
+- name: Upgrade system packages
+  package:
+    name: "*"
+    state: latest
+
+- name: Install minimal packages
+  package:
+    name: "{{ pre_install_packages }}"
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Put SELinux in permissive mode
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: Set vars
+  set_fact:
+    nb_nodes: "{{ groups['k8s_masters'] | length }}"
+    nb_master: "{{ groups['k8s_nodes'] | length }}"

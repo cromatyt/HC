@@ -1,0 +1,25 @@
+---
+
+- name: Add Hashicorp repo
+  yum_repository:
+    name: hashicorp
+    description: Hashicorp Stable - $basearch
+    baseurl: https://rpm.releases.hashicorp.com/RHEL/$releasever/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://rpm.releases.hashicorp.com/gpg
+    enabled: yes
+
+- name: Install consul package
+  package:
+    name: consul
+    state: present
+  #notify: Start consul
+
+- name: Correct consul service
+  lineinfile:
+    path: /usr/lib/systemd/system/consul.service
+    insertafter: '^\[Service\]'
+    line: "WorkingDirectory={{ consul_config_dir }}"
+
+# consul agent -server -node=master1 -bind 192.168.122.52 -client 0.0.0.0 -data-dir=tmp/consul -dev -ui 
+# http://192.168.122.52:8500/ui/dc1/services

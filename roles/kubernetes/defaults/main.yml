@@ -1,0 +1,72 @@
+timezone: "Europe/Paris"
+
+#pod_network_cidr: 10.244.0.0/16
+#service_cidr: 10.100.0.0/16
+
+metallb_service_range: 192.168.122.100-192.168.122.150
+
+node_monitor_grace_periode: 30s #default 40s
+node_monitor_period: 5s #default 5s
+pod_eviction_timeout: 10s #default 5m
+
+not_ready_toleration: 30 # default 300 (seconds)
+unreachable_toleration: 30 #default 300 (seconds)
+
+kubernetes_project_path: /opt/projects
+
+
+#### MOVE Set dynamic cilium params tasks avant kubeadm init ####
+
+
+#kubeadm init --pod-network-cidr=10.244.0.0/16 --service-cidr=10.100.0.0/16
+#allow master as worker => kubectl taint nodes --all node-role.kubernetes.io/master- (on masters) (à éviter)
+#install helm3 https://helm.sh/docs/intro/install/
+#install ingess: https://kubernetes.github.io/ingress-nginx/
+
+#curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+#chmod +x get_helm.sh 
+#./get_helm.sh
+#https://github.com/kubernetes/node-problem-detector => edit daemonset evict 10s(default 5m)
+#kubectl edit configmap -n kube-system kube-proxy => (TRUE)
+#    ipvs:
+#      strictARP: false to true
+#kubectl taint nodes --all node-role.kubernetes.io/master- (on masters)
+#curl https://projectcalico.docs.tigera.io/manifests/calico.yaml -O
+#kubectl apply -f calico.yaml
+#open port 7946 tcp & udp
+#helm repo add metallb https://metallb.github.io/metallb
+#create values.yaml
+#=>
+#configInline:
+#  address-pools:
+#   - name: default
+#     protocol: layer2
+#     addresses:
+#     - 192.168.122.12/32
+#     - 192.168.122.197/32
+#     - 192.168.122.23/32
+#
+#helm install metallb metallb/metallb -f values.yaml --namespace metallb --create-namespace
+#kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
+#https://github.com/kubernetes/examples/blob/master/staging/simple-nginx.md
+
+
+#helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#helm repo update
+#helm upgrade --install prometheus-operator prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --timeout 10m --debug
+#kubectl get secret --namespace monitoring prometheus-operator-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+#kubectl get serviceaccounts/job/secrets
+#debug (allow ping) => /etc/crio/crio.conf
+# search default_capabilities dict
+# add: "NET_RAW",
+#reload crio service
+# test : 
+#kubectl create deploy pingtest --image=busybox --replicas=3 -n test -- sleep infinity
+#kubectl delete pods <pod_name> --grace-period=0 --force -n <namespace>
+#kubectl drain node1 --ignore-daemonsets --delete-emptydir-data --grace-period=0 --force
+#kubectl delete node node1
+#don't use: kubeadm reset
+
+#crictl ps
+# etc/cni/net.d/100-crio-bridge.conf

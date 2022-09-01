@@ -1,0 +1,27 @@
+---
+
+#- name: Current "local" user
+#  debug:
+#    msg: "{{ lookup('env', 'USER') }}"
+#  register: end
+
+#- name: Init Master failed
+#  fail:
+#    msg: "Init Master failed"
+#  when: end is defined
+
+#- meta: end_play
+#  when: end is defined
+
+- include_tasks: pre_install.yml
+#  when: ansible_os_family in ['RedHat', 'Rocky']
+- include_tasks: swap.yml
+- include_tasks: chrony.yml
+- include_tasks: firewalld.yml
+- include_tasks: cri-o.yml
+#- include_tasks: containerd.yml
+- include_tasks: kernel_module.yml
+- include_tasks: hosts.yml
+- include_tasks: kubernetes.yml
+- include_tasks: helm.yml
+  when: inventory_hostname in groups['k8s_masters']

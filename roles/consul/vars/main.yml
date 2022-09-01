@@ -1,0 +1,5 @@
+pre_install_package:
+  - epel-release
+  - firewalld
+  - vim
+  - yum-utils

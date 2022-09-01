@@ -1,0 +1,32 @@
+---
+
+- name: Install chrony package
+  package:
+    name: chrony
+    state: present
+
+- name: Copy chrony configuration
+  copy:
+    src: chrony.conf
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Open Chrony port firewalld
+  firewalld:
+    service: ntp
+    permanent: yes
+    state: enabled
+  notify:
+    - Restart firewalld 
+
+- name: Restart chrony
+  systemd:
+    name: chronyd
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+- name: Synchronize chrony
+  shell: chronyc makestep

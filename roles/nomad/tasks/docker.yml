@@ -1,0 +1,18 @@
+---
+
+# no Rootless
+
+- name: Add docker CE repo
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker CE
+  package:
+    name: "{{ docker_pkg }}"
+    state: present
+
+- name: Start docker service
+  systemd:
+    name: docker
+    state: started
+    daemon_reload: yes
+    enabled: yes

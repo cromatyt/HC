@@ -1,0 +1,13 @@
+---
+
+- name: Reload firewalld
+  service:
+    name: firewalld
+    state: reloaded
+
+- name: Start boundary
+  systemd:
+    name: boundary
+    state: started
+    enabled: yes
+    daemon_reload: yes

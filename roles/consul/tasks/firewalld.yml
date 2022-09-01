@@ -1,0 +1,48 @@
+---
+
+- name: Open DNS port TCP
+  firewalld:
+    port: 8600/tcp
+    permanent: yes
+    state: enabled
+
+- name: Open DNS port UDP
+  firewalld:
+    port: 8600/udp
+    permanent: yes
+    state: enabled
+
+- name: Open HTTP(S) API + gRPC port
+  firewalld:
+    port: 8500-8502/tcp
+    permanent: yes
+    state: enabled
+
+- name: Open LAN/WAN/RPC port (tcp)
+  firewalld:
+    port: 8300-8302/tcp
+    permanent: yes
+    state: enabled
+
+- name: Open LAN/WAN port (udp)
+  firewalld:
+    port: 8301-8302/udp
+    permanent: yes
+    state: enabled
+
+- name: Open Sidecar Proxy min port
+  firewalld:
+    port: 21000/tcp
+    permanent: yes
+    state: enabled
+
+- name: Open Sidecar Proxy max port
+  firewalld:
+    port: 21255/tcp
+    permanent: yes
+    state: enabled
+
+- name: Reload firewalld
+  service:
+    name: firewalld
+    state: reloaded

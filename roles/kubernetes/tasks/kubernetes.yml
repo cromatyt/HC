@@ -1,0 +1,105 @@
+---
+
+- name: Add Kubernetes repo
+  copy:
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: 644
+
+- name: Install kubenetes packages
+  dnf:
+    name: "{{ kubernetes_packages }}"
+    state: present
+    disable_excludes: kubernetes
+
+- meta: end_play
+
+- name: Get services facts
+  service_facts:
+
+#kubeadm init --pod-network-cidr=10.10.0.0/16 --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+- name: Initialyze kubernetes on master (~5 min)
+  shell: "kubeadm init" #--pod-network-cidr={{ pod_network_cidr | quote }} --service-cidr={{ service_cidr | quote }}" #--pod-eviction-timeout=60s"
+  when: ansible_facts.services["kubelet.service"].state != "running" and inventory_hostname in groups['k8s_masters'] 
+  register: kube_init
+  failed_when: "'FAILED' in kube_init.stderr"
+
+- name: Add conf kube controller manager
+  lineinfile:
+    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    insertbefore: 'image:'
+    line: "{{ item }}"
+  with_items:
+    - "    - --node-monitor-grace-period={{ node_monitor_grace_periode }}"
+    - "    - --node-monitor-period={{ node_monitor_period }}"
+    - "    - --pod-eviction-timeout={{ pod_eviction_timeout }}"
+  when: inventory_hostname in groups['k8s_masters']
+
+- name: Add conf kube apiserver
+  lineinfile:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    insertbefore: 'image:'
+    line: "{{ item }}"
+  with_items:
+    - "    - --default-not-ready-toleration-seconds={{ not_ready_toleration }}"
+    - "    - --default-unreachable-toleration-seconds={{ unreachable_toleration }}"
+  when: inventory_hostname in groups['k8s_masters']
+
+- name: Transfer var kube_init from master var to node
+  debug:
+    msg: "{% for ip in groups['k8s_masters'] %}{{ hostvars[ip]['kube_init'] }}{% endfor %}"
+  when: inventory_hostname in groups['k8s_nodes']
+  register: init_ok
+  no_log: true
+
+#openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+#kubeadm token list -o json | jq -r .token
+- name: Print Kubeadm join command
+  debug:
+    msg: "kubeadm join{{ kube_init.stdout_lines | trim | regex_search('kubeadm join(.*)', '\\1') | first | replace(\"\\\\', '\\t\",'') | replace(\" ']\", '') }}"
+  when: inventory_hostname in groups['k8s_masters'] and kube_init.changed == true
+  register: kubeadm_join_master
+
+- name: Transfer var kubeadm_join_master from master to node
+  debug:
+    msg: "{% for ip in groups['k8s_masters'] %}{{ hostvars[ip]['kubeadm_join_master'].msg }}{% endfor %}"
+  when: inventory_hostname in groups['k8s_nodes'] and init_ok.msg.changed == true
+  register: kubeadm_join_node
+
+- name: Export kubeconfig on master
+  copy:
+    content: export KUBECONFIG=/etc/kubernetes/admin.conf
+    dest: /etc/profile.d/kubeconfig.sh
+    owner: root
+    group: root
+    mode: 644
+  notify: Enable kubelet
+  when: inventory_hostname in groups['k8s_masters'] and kube_init.changed == true
+
+- name: Export kubeconfig on node
+  copy:
+    content: export KUBECONFIG=/etc/kubernetes/kubelet.conf
+    dest: /etc/profile.d/kubeconfig.sh
+    owner: root
+    group: root
+    mode: 644
+  notify: Enable kubelet
+  when: inventory_hostname in groups['k8s_nodes'] and init_ok.msg.changed == true
+
+- name: Node join cluster
+  shell: "{{ kubeadm_join_node.msg }}"
+  when: inventory_hostname in groups['k8s_nodes'] and init_ok.msg.changed == true
+
+# https://kubernetes.io/docs/concepts/cluster-administration/addons/
+#- name: Deploy kubernetes newtork
+#  shell: kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+#  when: inventory_hostname in groups['k8s_masters'] and kube_init.changed == true
+
+#- shell: kubectl get nodes
+#  register: check
+
+#- name: Check nodes
+#  debug:
+#    msg: "{{ check.stdout_lines }}"

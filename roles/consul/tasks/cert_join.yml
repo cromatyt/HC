@@ -1,0 +1,78 @@
+---
+
+- set_fact:
+    consul_ca_name: "{{ hostvars[consul_first_server].consul_ca_name }}"
+    consul_encrypt_key: "{{ hostvars[consul_first_server].consul_encrypt_key }}"
+  when: ansible_default_ipv4['address'] != consul_first_server
+
+- name: Copy CA file to allow server
+  copy:
+    src: "{{ item }}"
+    dest: "{{ consul_config_dir }}"
+    owner: consul
+    group: consul
+  with_fileglob: /tmp/*.pem
+  when: ansible_default_ipv4['address'] != consul_first_server
+
+- name: find CA key files to
+  find: 
+    paths: "{{ consul_config_dir }}"
+    recurse: no 
+    patterns: "*-key.pem"
+  register: ca_key
+
+- name: Correct CA key rights
+  file:
+    path: "{{ item.path }}"
+    owner: consul
+    group: consul
+    mode: 0600
+  with_items:
+    - "{{ ca_key.files }}"
+  when: ansible_default_ipv4['address'] != consul_first_server
+
+- set_fact:
+    consul_dc_list: "{{ consul_dc_list | default([]) + [ 'dc' + (item|string) ] }}"
+    consul_additional_dnsname: "{{ consul_additional_dnsname | default([]) + [ '-additional-dnsname=\"*.dc' + (item|string) + '\"' ] }}"
+  loop: "{{ range(0, ((consul_server_count|int)-1) +1 )  | list }}"
+  when: ansible_default_ipv4['address'] != groups['consul_server'][item]
+
+- name: Generate consul cert
+  command: "consul tls cert create -server -dc={{ consul_dc_name }} -node={{ consul_node_name }} -ca={{ consul_config_dir }}/{{ consul_ca_name }} {{ consul_additional_dnsname | join(',') | replace(',',' ') }}"
+  when: consul_type == "server"
+  become_user: consul
+  args:
+    chdir: /etc/consul.d/
+  vars:
+    ansible_remote_tmp: /tmp
+
+- set_fact:
+    consul_cert_file: "{{ consul_dc_name }}-server-consul-0.pem"
+    consul_key_file: "{{ consul_dc_name }}-server-consul-0-key.pem"
+
+- name: Configure consul
+  template:
+    src: consul.hcl.j2
+    dest: "{{ consul_config_dir }}/consul.hcl"
+    owner: consul
+    group: consul
+    mode: 0644
+
+- name: Start consul
+  systemd:
+    name: consul
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+#- name: Register keyring for join
+#  command: "consul keyring -install={{ hostvars[item].consul_encrypt_key.stdout }}"
+#  with_inventory_hostnames:
+#    - "all:!{{ inventory_hostname }}"
+
+- name: Wait 15s
+  command: sleep 15
+
+- name: Run consul join command
+  command: "consul join -wan {{ consul_first_server }}"
+  when: ansible_default_ipv4['address'] != consul_first_server

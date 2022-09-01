@@ -1,0 +1,32 @@
+---
+
+- name: Create encrypted key via consul cli
+  command: consul keygen
+  register: consul_encrypt_key
+
+- name: Generate consul CA
+  command: consul tls ca create
+  register: consul_ca
+  become_user: consul
+  args:
+    chdir: /etc/consul.d/
+  vars:
+    ansible_remote_tmp: /tmp
+
+- set_fact:
+    consul_ca_name: "{{ consul_ca.stdout_lines[0].split('==> Saved ') | last }}"
+
+- name: find CA files to copy
+  find: 
+    paths: "{{ consul_config_dir }}"
+    recurse: no 
+    patterns: "*.pem"
+  register: ca_to_copy
+
+- name: fetch CA file
+  fetch:
+    src: "{{ item.path }}"
+    dest: /tmp/
+    flat: yes
+  with_items: "{{ ca_to_copy.files }}"
+  

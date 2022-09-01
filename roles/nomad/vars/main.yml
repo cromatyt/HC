@@ -1,0 +1,12 @@
+pre_install_package:
+  - epel-release
+  - firewalld
+  - vim
+  - yum-utils
+  - curl
+
+docker_pkg:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
