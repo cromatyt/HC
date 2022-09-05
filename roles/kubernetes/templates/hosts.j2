@@ -1,6 +1,7 @@
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 #::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
+{% if groups['k8s_masters'] | length != 1 %}
 {% for master in groups['k8s_masters'] %}
 {{ master }}    k8s_master{{ loop.index }} master{{ loop.index }}
 {% endfor %}
@@ -8,3 +9,12 @@
 {% for node in groups['k8s_nodes'] %}
 {{ node }}  k8s_node{{ loop.index }} node{{ loop.index }}
 {% endfor %}
+{% else %}
+{% for master in groups['k8s_masters'] %}
+{{ master }}    k8s_master master
+{% endfor %}
+
+{% for node in groups['k8s_nodes'] %}
+{{ node }}  k8s_node{{ loop.index }} node{{ loop.index }} {{ansible_hostname}}
+{% endfor %}
+{% endif %}

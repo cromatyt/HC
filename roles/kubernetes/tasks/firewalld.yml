@@ -48,6 +48,12 @@
     immediate: yes
   when: inventory_hostname in groups['k8s_nodes']
 
+- name: Allow masquerade
+  firewalld:
+      masquerade: yes
+      state: enabled
+      permanent: yes
+
 #- name: Calico Typha
 #  firewalld:
 #    port: 5473/tcp

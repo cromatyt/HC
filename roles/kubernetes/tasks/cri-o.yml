@@ -24,7 +24,9 @@
   register: crio_version
 
 - set_fact:
-    crio_tag: "{{ crio_version['json']['tag_name'][1:-2] }}"
+    ## 4 sept 2022: repo crio version 1.25 doesn't work for CentOS_8
+    #crio_tag: "{{ crio_version['json']['tag_name'][1:-2] }}"
+    crio_tag: 1.24
 
 - name: Add libcontainers_stable repo
   yum_repository:

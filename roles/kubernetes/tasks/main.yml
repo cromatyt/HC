@@ -18,10 +18,14 @@
 - include_tasks: swap.yml
 - include_tasks: chrony.yml
 - include_tasks: firewalld.yml
-- include_tasks: cri-o.yml
-#- include_tasks: containerd.yml
 - include_tasks: kernel_module.yml
 - include_tasks: hosts.yml
+- include_tasks: cni_plugins.yml
+- include_tasks: cri-o.yml
+##- include_tasks: containerd_from_repo.yml
+##- include_tasks: containerd.yml
+##- include_tasks: renew_containerd.yml
+##- include_tasks: runc.yml
 - include_tasks: kubernetes.yml
 - include_tasks: helm.yml
   when: inventory_hostname in groups['k8s_masters']

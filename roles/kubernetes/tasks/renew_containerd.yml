@@ -1,0 +1,83 @@
+---
+
+- name: Get latest containerd version
+  uri:
+    url: https://api.github.com/repos/containerd/containerd/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: containerd_version
+
+- set_fact:
+    containerd_release_version: "{{ containerd_version['json']['tag_name'][1:] }}"
+
+- name: Create load modules conf at bootup
+  copy:
+    src: cni.conf
+    dest: /etc/modules-load.d/containerd.conf
+    owner: root
+    group: root
+
+- name: Install containerd
+  unarchive:
+    src: "https://github.com/containerd/containerd/releases/download/v{{ containerd_release_version }}/containerd-{{ containerd_release_version }}-linux-amd64.tar.gz"
+    dest: "/usr/local"
+    remote_src: yes
+  retries: 3
+
+- name: Create a directory for containerd
+  file: 
+    path: "{{ containerd_conf_dir }}"
+    state: directory
+    owner: root
+    group: root
+
+- name: Generate containerd config.toml
+  shell: containerd config default > /etc/containerd/config.toml
+
+- name: Enable SystemdCgroup containerd runtime option
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'SystemdCgroup = false'
+    replace: 'SystemdCgroup = true'
+
+# if you want devmapper don't at it in disabled_plugins
+## config: https://fossies.org/linux/containerd/snapshots/devmapper/README.md
+- name: Disable some containerd plugins
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'disabled_plugins = \[\]'
+    replace: 'disabled_plugins = ["io.containerd.snapshotter.v1.btrfs", "io.containerd.snapshotter.v1.aufs", "io.containerd.snapshotter.v1.zfs", "io.containerd.snapshotter.v1.devmapper"]'
+
+- name: Disable containerd sharing
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'content_sharing_policy = "shared"'
+    replace: 'content_sharing_policy = "isolated"'
+
+# https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
+- name: Specify crictl runtime endpoind
+  copy:
+    src: crictl.yaml
+    dest: /etc/crictl.yaml
+    owner: root
+    group: root
+
+- name: Install containerd service
+  get_url:
+    url: "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
+    dest: "/usr/lib/systemd/system/containerd.service"
+    mode: 0644
+
+- name: Start containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+#- name: remove tmp file
+#  file:
+#    path: "/tmp/cri-containerd-{{ containerd_tag }}-linux-amd64.tar.gz"
+#    state: absent

@@ -1,0 +1,22 @@
+---
+
+- name: Get latest runc version
+  uri:
+    url: https://api.github.com/repos/opencontainers/runc/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: runc_version
+
+- set_fact:
+    runc_release_version: "{{ runc_version['json']['tag_name'][1:] }}"
+
+- name: Get Runc
+  get_url:
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ runc_release_version }}/runc.amd64"
+    dest: "/tmp/runc.amd64"
+    mode: 0755
+
+- name: Install Runc
+  shell: install -m 755 /tmp/runc.amd64 /usr/local/sbin/runc

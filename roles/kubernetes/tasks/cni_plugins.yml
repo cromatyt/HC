@@ -1,0 +1,35 @@
+---
+
+- name: Create a directory for cni binary
+  file: 
+    path: "{{ cni_bin_dir }}"
+    state: directory
+    owner: root
+    group: root
+
+- name: Create a directory for cni config files
+  file: 
+    path: "{{ cni_conf_dir }}"
+    state: directory
+    owner: root
+    group: root
+
+- name: Get latest cni plugins version
+  uri:
+    url: https://api.github.com/repos/containernetworking/plugins/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: cni_plugins_version
+
+- set_fact:
+    #cni_plugins_release_version: "{{ cni_plugins_version['json']['tag_name'][1:] }}"
+    cni_plugins_release_version: 1.1.1
+
+- name: Install cni plugins
+  unarchive:
+    src: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_release_version }}/cni-plugins-linux-amd64-v{{ cni_plugins_release_version }}.tgz"
+    dest: "{{ cni_bin_dir }}"
+    remote_src: yes
+  retries: 3

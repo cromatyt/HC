@@ -15,6 +15,9 @@ unreachable_toleration: 30 #default 300 (seconds)
 kubernetes_project_path: /opt/projects
 
 
+## Miss token ? => kubeadm token create --print-join-command
+
+
 #### MOVE Set dynamic cilium params tasks avant kubeadm init ####
 
 

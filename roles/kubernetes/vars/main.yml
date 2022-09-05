@@ -3,9 +3,19 @@ pre_install_packages:
   - firewalld
   - vim
   - yum-utils
+  - dnf-utils
   - iproute-tc
   - zip
+  - unzip
   - tar
+
+unneeded_packages:
+  - cockpit
+
+cni_bin_dir: /opt/cni/bin/
+cni_conf_dir: /etc/cni/net.d/
+
+containerd_conf_dir: /etc/containerd/
 
 kubernetes_packages:
   - kubelet

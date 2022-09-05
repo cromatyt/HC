@@ -14,15 +14,20 @@
     state: present
     disable_excludes: kubernetes
 
-- meta: end_play
+- name: Enable kubelet
+  service:
+    name: kubelet
+    #state: started
+    enabled: yes
 
-- name: Get services facts
-  service_facts:
+#- meta: end_play
 
 #kubeadm init --pod-network-cidr=10.10.0.0/16 --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
 - name: Initialyze kubernetes on master (~5 min)
-  shell: "kubeadm init" #--pod-network-cidr={{ pod_network_cidr | quote }} --service-cidr={{ service_cidr | quote }}" #--pod-eviction-timeout=60s"
-  when: ansible_facts.services["kubelet.service"].state != "running" and inventory_hostname in groups['k8s_masters'] 
+  shell: kubeadm init --skip-phases=addon/kube-proxy
+  #shell: "kubeadm init" #--pod-network-cidr={{ pod_network_cidr | quote }} --service-cidr={{ service_cidr | quote }}" #--pod-eviction-timeout=60s"
+  #when: ansible_facts.services["kubelet.service"].state != "running" and inventory_hostname in groups['k8s_masters']
+  when: inventory_hostname in groups['k8s_masters'] 
   register: kube_init
   failed_when: "'FAILED' in kube_init.stderr"
 
@@ -75,7 +80,7 @@
     owner: root
     group: root
     mode: 644
-  notify: Enable kubelet
+  #notify: Enable kubelet
   when: inventory_hostname in groups['k8s_masters'] and kube_init.changed == true
 
 - name: Export kubeconfig on node
