@@ -9,6 +9,11 @@ pre_install_packages:
   - unzip
   - tar
 
+cilium_pkg_require:
+  - clang
+  - llvm
+  - iproute
+
 unneeded_packages:
   - cockpit
 
@@ -38,6 +43,7 @@ cilium_udp:
   - "51871" # WireGuard encryption tunnel endpoint
 
 cilium_params:
+  ## Base Requirements
   - CONFIG_BPF=y
   - CONFIG_BPF_SYSCALL=y
   - CONFIG_NET_CLS_BPF=y
@@ -48,17 +54,41 @@ cilium_params:
   - CONFIG_CRYPTO_USER_API_HASH=y
   - CONFIG_CGROUPS=y
   - CONFIG_CGROUP_BPF=y
-  - CONFIG_NETFILTER_XT_SET=m
-  - CONFIG_IP_SET=m
-  - CONFIG_IP_SET_HASH_IP=m
+  ## Requirements for Iptables-based Masquerading
+  #- CONFIG_NETFILTER_XT_SET=m
+  #- CONFIG_IP_SET=m
+  #- CONFIG_IP_SET_HASH_IP=m
+  ## Requirements for L7 and FQDN Policies
   - CONFIG_NETFILTER_XT_TARGET_TPROXY=m
   - CONFIG_NETFILTER_XT_TARGET_CT=m
   - CONFIG_NETFILTER_XT_MATCH_MARK=m
   - CONFIG_NETFILTER_XT_MATCH_SOCKET=m
+  ## Requirements for the Bandwidth Manager
   - CONFIG_NET_SCH_FQ=m
+  ## Requirements for IPsec
+  - CONFIG_XFRM=y
+  - CONFIG_XFRM_OFFLOAD=y
+  - CONFIG_XFRM_STATISTICS=y
+  - CONFIG_XFRM_ALGO=m
+  - CONFIG_XFRM_USER=m
+  - CONFIG_INET{,6}_ESP=m
+  - CONFIG_INET{,6}_IPCOMP=m
+  - CONFIG_INET{,6}_XFRM_TUNNEL=m
+  - CONFIG_INET{,6}_TUNNEL=m
+  - CONFIG_INET_XFRM_MODE_TUNNEL=m
+  - CONFIG_CRYPTO_AEAD=m
+  - CONFIG_CRYPTO_AEAD2=m
+  - CONFIG_CRYPTO_GCM=m
+  - CONFIG_CRYPTO_SEQIV=m
+  - CONFIG_CRYPTO_CBC=m
+  - CONFIG_CRYPTO_HMAC=m
+  - CONFIG_CRYPTO_SHA256=m
+  - CONFIG_CRYPTO_AES=m
+
 
 firewall_standard:
   - 80
   - 443
+  - 8080
 
 ## 9153/tcp ??

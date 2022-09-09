@@ -1,0 +1,26 @@
+---
+
+- name: Get All IP
+  set_fact:
+    all_ip: "{{ groups['k8s_nodes'] + groups['k8s_masters'] }}"
+
+- name: Trust all traffic from cluster
+  firewalld:
+    zone: trusted
+    source: "{{ item }}/32"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  with_items: "{{ all_ip }}"
+
+- name: Allow masquerade
+  firewalld:
+      masquerade: yes
+      state: enabled
+      permanent: yes
+
+- name: Restart firewalld
+  service:
+    name: firewalld
+    state: restarted
+    enabled: yes

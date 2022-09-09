@@ -17,40 +17,41 @@
 - name: Enable kubelet
   service:
     name: kubelet
-    #state: started
     enabled: yes
 
-#- meta: end_play
+- name: Get master IP
+  set_fact:
+    master_ip: "{{ groups['k8s_masters'][0] }}"
 
 #kubeadm init --pod-network-cidr=10.10.0.0/16 --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
 - name: Initialyze kubernetes on master (~5 min)
-  shell: kubeadm init --skip-phases=addon/kube-proxy
+  shell: "kubeadm init --apiserver-advertise-address={{ master_ip }} --cri-socket=unix:///run/containerd/containerd.sock --skip-phases=addon/kube-proxy"
   #shell: "kubeadm init" #--pod-network-cidr={{ pod_network_cidr | quote }} --service-cidr={{ service_cidr | quote }}" #--pod-eviction-timeout=60s"
   #when: ansible_facts.services["kubelet.service"].state != "running" and inventory_hostname in groups['k8s_masters']
   when: inventory_hostname in groups['k8s_masters'] 
   register: kube_init
   failed_when: "'FAILED' in kube_init.stderr"
 
-- name: Add conf kube controller manager
-  lineinfile:
-    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
-    insertbefore: 'image:'
-    line: "{{ item }}"
-  with_items:
-    - "    - --node-monitor-grace-period={{ node_monitor_grace_periode }}"
-    - "    - --node-monitor-period={{ node_monitor_period }}"
-    - "    - --pod-eviction-timeout={{ pod_eviction_timeout }}"
-  when: inventory_hostname in groups['k8s_masters']
+#- name: Add conf kube controller manager
+#  lineinfile:
+#    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+#    insertbefore: 'image:'
+#    line: "{{ item }}"
+#  with_items:
+#    - "    - --node-monitor-grace-period={{ node_monitor_grace_periode }}"
+#    - "    - --node-monitor-period={{ node_monitor_period }}"
+#    - "    - --pod-eviction-timeout={{ pod_eviction_timeout }}"
+#  when: inventory_hostname in groups['k8s_masters']
 
-- name: Add conf kube apiserver
-  lineinfile:
-    path: /etc/kubernetes/manifests/kube-apiserver.yaml
-    insertbefore: 'image:'
-    line: "{{ item }}"
-  with_items:
-    - "    - --default-not-ready-toleration-seconds={{ not_ready_toleration }}"
-    - "    - --default-unreachable-toleration-seconds={{ unreachable_toleration }}"
-  when: inventory_hostname in groups['k8s_masters']
+#- name: Add conf kube apiserver
+#  lineinfile:
+#    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+#    insertbefore: 'image:'
+#    line: "{{ item }}"
+#  with_items:
+#    - "    - --default-not-ready-toleration-seconds={{ not_ready_toleration }}"
+#    - "    - --default-unreachable-toleration-seconds={{ unreachable_toleration }}"
+#  when: inventory_hostname in groups['k8s_masters']
 
 - name: Transfer var kube_init from master var to node
   debug:

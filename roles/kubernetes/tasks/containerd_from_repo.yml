@@ -12,12 +12,12 @@
     name: containerd.io
     state: present
 
-- name: Create a directory for containerd
-  file: 
-    path: "{{ containerd_conf_dir }}"
-    state: directory
-    owner: root
-    group: root
+#- name: Create a directory for containerd
+#  file: 
+#    path: "{{ containerd_conf_dir }}"
+#    state: directory
+#    owner: root
+#    group: root
 
 - name: Generate containerd config.toml
   shell: containerd config default > /etc/containerd/config.toml

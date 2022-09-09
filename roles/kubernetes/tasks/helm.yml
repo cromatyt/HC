@@ -1,10 +1,10 @@
 ---
 
-- name: Create path
-  file:
-    path : "{{ kubernetes_project_path }}"
-    state: directory
-    mode: 0755
+#- name: Create path
+#  file:
+#    path : "{{ kubernetes_project_path }}"
+#    state: directory
+#    mode: 0755
 
 - name: Check Helm3
   stat:
@@ -22,34 +22,34 @@
   shell: bash /tmp/get_helm.sh
   when: not helm3_status.stat.exists
 
-- name: Set permanent cilium params
-  template:
-    src: environment.j2
-    dest: /etc/environment
-    mode: 0644
+#- name: Set permanent cilium params
+#  template:
+#    src: environment.j2
+#    dest: /etc/environment
+#    mode: 0644
 
-- name: Set dynamic cilium params
-  shell: "export {{ item }}"
-  with_items: "{{ cilium_params }}"
+#- name: Set dynamic cilium params
+#  shell: "export {{ item }}"
+#  with_items: "{{ cilium_params }}"
 
-- name: Add cilium repo
-  shell: helm repo add cilium https://helm.cilium.io/
+#- name: Add cilium repo
+#  shell: helm repo add cilium https://helm.cilium.io/
 
-- name: Install cilium
-  shell: |
-    helm install cilium cilium/cilium --version 1.11.5 \
-      --namespace kube-system \
-      --set ipam.operator.clusterPoolIPv4PodCIDR="10.244.0.0/16" \
-      --set global.masquerade=false \
-      --set global.nodeinit.enabled=true \
-      --set hostFirewall.enabled=true \
-      --set bandwidthManager=true \
-      --set enableXTSocketFallback=false \
-      --set kubeProxyReplacement=strict \
-      --set hubble.enabled=false \
-      --set encryption.enabled=true
-    until [[ $(kubectl get pods -n kube-system --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; echo ""; done
-    sleep 10
+#- name: Install cilium
+#  shell: |
+#    helm install cilium cilium/cilium --version 1.11.5 \
+#      --namespace kube-system \
+#      --set ipam.operator.clusterPoolIPv4PodCIDR="10.244.0.0/16" \
+#      --set global.masquerade=false \
+#      --set global.nodeinit.enabled=true \
+#      --set hostFirewall.enabled=true \
+#      --set bandwidthManager=true \
+#      --set enableXTSocketFallback=false \
+#      --set kubeProxyReplacement=strict \
+#      --set hubble.enabled=false \
+#      --set encryption.enabled=true
+#    until [[ $(kubectl get pods -n kube-system --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; echo ""; done
+#    sleep 10
 
 - name: Add metalLB
   shell: helm repo add metallb https://metallb.github.io/metallb
@@ -63,13 +63,13 @@
 - name: Install metalLB
   shell: |
     helm install metallb metallb/metallb -f /tmp/metallb.yaml --namespace metallb --create-namespace
-    until [[ $(kubectl get pods -n metallb --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; echo ""; done
+    until [[ $(kubectl get pods -n metallb --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; done
     sleep 10
 
 - name: Install ingress-nginx
   shell: |
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
-    until [[ $(kubectl get pods -n ingress-nginx --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; echo ""; done
+    until [[ $(kubectl get pods -n ingress-nginx --field-selector status.phase=Running | wc -l) == 1 ]] ; do date; sleep 1; done
     sleep 10
 
 - name: Scale ingress-nginx

@@ -1,0 +1,1 @@
+/usr/local/bin/cilium install

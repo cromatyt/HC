@@ -16,7 +16,9 @@ kubernetes_project_path: /opt/projects
 
 
 ## Miss token ? => kubeadm token create --print-join-command
-
+## allow deploy on master =>
+#kubectl taint nodes --all node-role.kubernetes.io/master-
+#kubectl taint nodes --all  node-role.kubernetes.io/control-plane-
 
 #### MOVE Set dynamic cilium params tasks avant kubeadm init ####
 

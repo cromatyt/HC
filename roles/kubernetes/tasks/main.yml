@@ -13,19 +13,29 @@
 #- meta: end_play
 #  when: end is defined
 
+
 - include_tasks: pre_install.yml
 #  when: ansible_os_family in ['RedHat', 'Rocky']
 - include_tasks: swap.yml
 - include_tasks: chrony.yml
-- include_tasks: firewalld.yml
+#- include_tasks: firewalld.yml
+#- include_tasks: simple_firewalld.yml
+- name: Disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
 - include_tasks: kernel_module.yml
 - include_tasks: hosts.yml
-- include_tasks: cni_plugins.yml
-- include_tasks: cri-o.yml
-##- include_tasks: containerd_from_repo.yml
+##- include_tasks: cni_plugins.yml
+##- include_tasks: cri-o.yml
+- include_tasks: containerd_from_repo.yml
 ##- include_tasks: containerd.yml
 ##- include_tasks: renew_containerd.yml
 ##- include_tasks: runc.yml
 - include_tasks: kubernetes.yml
+- include_tasks: cilium.yml
+  when: inventory_hostname in groups['k8s_masters']
+- meta: end_play
 - include_tasks: helm.yml
   when: inventory_hostname in groups['k8s_masters']

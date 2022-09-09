@@ -1,0 +1,39 @@
+---
+
+- name: Install minimal packages
+  package:
+    name: "{{ cilium_pkg_require }}"
+    state: present
+
+- name: Set permanent cilium params
+  template:
+    src: environment.j2
+    dest: /etc/environment
+    mode: 0644
+
+- name: Set dynamic cilium params
+  shell: "export {{ item }}"
+  with_items: "{{ cilium_params }}"
+
+- name: Get latest cilium cli version
+  uri:
+    url: https://api.github.com/repos/cilium/cilium-cli/releases/latest
+    method: GET
+    return_content: true
+    status_code: 200
+    body_format: json
+  register: ciliumcli_version
+
+- set_fact:
+    ciliumcli_tag: "{{ ciliumcli_version['json']['tag_name'] }}"
+
+- name: Download clilium
+  unarchive:
+    src: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumcli_tag }}/cilium-linux-amd64.tar.gz"
+    dest: "/usr/local/bin"
+    remote_src: yes
+  retries: 3
+
+- name: Install cilium
+  shell: cilium install
+  retries: 3
