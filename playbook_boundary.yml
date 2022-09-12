@@ -1,0 +1,10 @@
+- name: Deploy boundary
+  hosts: boundary
+  remote_user: root
+  roles:
+    - {
+        role: roles/boundary,
+        become: yes,
+        any_errors_fatal: true,
+        #tags: []
+    }

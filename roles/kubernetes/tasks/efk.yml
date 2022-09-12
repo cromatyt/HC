@@ -1,0 +1,17 @@
+#https://artifacthub.io/packages/helm/fluent/fluent-bit
+- name: Check if helm is installed
+  command: which helm
+
+#helm repo add fluent https://fluent.github.io/helm-charts
+- name: Add fluent chart repo
+  kubernetes.core.helm_repository:
+    name: fluent
+    repo_url: "https://fluent.github.io/helm-charts"
+
+#helm install fluent-bit fluent/fluent-bit
+- name: Deploy fluent-bit
+  kubernetes.core.helm:
+    name: fluent-bit
+    chart_ref: fluent/fluent-bit
+    chart_version: 0.20.7
+    release_namespace: fluent-bit

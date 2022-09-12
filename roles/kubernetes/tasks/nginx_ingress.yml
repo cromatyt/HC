@@ -1,0 +1,9 @@
+- name: Install ingress-nginx
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
+    until [[ $(kubectl get pods -n ingress-nginx --field-selector status.phase=Running --no-headers | wc -l) == 1 ]] ; do date; sleep 1; done
+    sleep 10
+
+- name: Scale ingress-nginx
+  #shell: "kubectl scale deployment --replicas {{ (nb_nodes | int) + (nb_master | int) }} ingress-nginx-controller -n ingress-nginx"
+  shell: "kubectl scale deployment --replicas {{ (nb_nodes | int) }} ingress-nginx-controller -n ingress-nginx"

@@ -1,41 +1,145 @@
 ---
 
-#- name: Current "local" user
-#  debug:
-#    msg: "{{ lookup('env', 'USER') }}"
-#  register: end
+- block:
+  - include_tasks: pre_install.yml
+    when: 
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: requirement
 
-#- name: Init Master failed
-#  fail:
-#    msg: "Init Master failed"
-#  when: end is defined
+- block:
+  - include_tasks: swap.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: swap
 
-#- meta: end_play
-#  when: end is defined
+- block:
+  - include_tasks: chrony.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: chrony
 
-
-- include_tasks: pre_install.yml
-#  when: ansible_os_family in ['RedHat', 'Rocky']
-- include_tasks: swap.yml
-- include_tasks: chrony.yml
 #- include_tasks: firewalld.yml
 #- include_tasks: simple_firewalld.yml
-- name: Disable firewalld
-  service:
-    name: firewalld
-    state: stopped
-    enabled: no
-- include_tasks: kernel_module.yml
-- include_tasks: hosts.yml
+
+- block:
+  # Let Cilium do firewall
+  - include_tasks: disable_firewalld.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: no_firewall
+
+- block:
+  - include_tasks: kernel_module.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: kernel
+
+- block:
+  - include_tasks: hosts.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: host
+
 ##- include_tasks: cni_plugins.yml
 ##- include_tasks: cri-o.yml
-- include_tasks: containerd_from_repo.yml
+
+- block:
+  - include_tasks: containerd_from_repo.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: containerd
+
 ##- include_tasks: containerd.yml
 ##- include_tasks: renew_containerd.yml
 ##- include_tasks: runc.yml
-- include_tasks: kubernetes.yml
-- include_tasks: cilium.yml
-  when: inventory_hostname in groups['k8s_masters']
-- meta: end_play
-- include_tasks: helm.yml
-  when: inventory_hostname in groups['k8s_masters']
+
+- block:
+  - include_tasks: kubernetes.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+  tags: kubernetes
+
+#- name: Iptables flush
+#  iptables:
+#    flush: yes
+
+- block:
+  - include_tasks: cilium.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: cilium
+
+- block:
+  - include_tasks: helm.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: helm
+
+- block:
+  - include_tasks: metallb.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: metallb
+
+- block:
+  - include_tasks: nginx_ingress.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: nginx_ingress
+
+- block:
+  - include_tasks: kubernetes_dash.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: kubeDash
+
+- block:
+  - include_tasks: prometheus_stack.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: promeStack
+
+- block:
+  - include_tasks: efk.yml
+    when:
+      - ansible_os_family in ['RedHat', 'Rocky']
+      - ansible_distribution == 'Rocky' 
+      - ansible_distribution_major_version == "8" or ansible_distribution_major_version == "9"
+      - inventory_hostname in groups['k8s_masters']
+  tags: efk
+
+## Add https://artifacthub.io/packages/helm/cert-manager/cert-manager ?

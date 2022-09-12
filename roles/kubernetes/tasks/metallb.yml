@@ -1,0 +1,17 @@
+- name: Check if helm is installed
+  command: which helm
+
+- name: Add metalLB
+  shell: helm repo add metallb https://metallb.github.io/metallb
+
+- name: Copy metallb values
+  template:
+    src: metallb.j2
+    dest: /tmp/metallb.yaml
+    mode: 0644
+
+- name: Install metalLB
+  shell: |
+    helm install metallb metallb/metallb -f /tmp/metallb.yaml --namespace metallb --create-namespace
+    until [[ $(kubectl get pods -n metallb --field-selector status.phase!=Running --no-headers | wc -l) == 0 ]] ; do date; sleep 1; done
+    sleep 10

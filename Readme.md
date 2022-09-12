@@ -2,6 +2,11 @@
 
 :warning: WIP project :warning:
 
+Sometime cilium install from this ansible role.
+If it happens, go on master end run this command :
+
+`cilium install`
+
 ## Required
 
 Those roles require RedHat like OS
@@ -26,3 +31,30 @@ sysctl -p
 6. Modify metallb_service_range in defaults/main.yml and uncomment shell part of "Initialyze kubernetes on master (~5 min)" in tasks/kubernetes.yml if you want to set a specify network/service cidr
 7. Run this ansible playbook
 `ansible-playbook playbook.yml -i hosts`
+
+## Check ansible available tags
+
+`ansible-playbook playbook.yml -i hosts --list-tags`
+
+| Tags name |
+| --- |
+| requirement |
+| swap |
+| chrony |
+| no_firewall |
+| kernel |
+| host |
+| containerd |
+| kubernetes |
+| cilium |
+| helm |
+| metallb |
+| nginx_ingress |
+| kubeDash |
+| promeStack |
+| efk |
+
+## Check install on master node
+
+1. `cilium status`
+2. `cilium connectivity test`

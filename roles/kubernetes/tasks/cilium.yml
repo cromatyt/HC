@@ -1,5 +1,34 @@
 ---
 
+#- name: Set permanent cilium params
+#  template:
+#    src: environment.j2
+#    dest: /etc/environment
+#    mode: 0644
+
+#- name: Set dynamic cilium params
+#  shell: "export {{ item }}"
+#  with_items: "{{ cilium_params }}"
+
+#- name: Add cilium repo
+#  shell: helm repo add cilium https://helm.cilium.io/
+
+#- name: Install cilium
+#  shell: |
+#    helm install cilium cilium/cilium --version 1.11.5 \
+#      --namespace kube-system \
+#      --set ipam.operator.clusterPoolIPv4PodCIDR="10.244.0.0/16" \
+#      --set global.masquerade=false \
+#      --set global.nodeinit.enabled=true \
+#      --set hostFirewall.enabled=true \
+#      --set bandwidthManager=true \
+#      --set enableXTSocketFallback=false \
+#      --set kubeProxyReplacement=strict \
+#      --set hubble.enabled=false \
+#      --set encryption.enabled=true
+#    until [[ $(kubectl get pods -n kube-system --field-selector status.phase!=Running | wc -l) == 0 ]] ; do date; sleep 1; echo ""; done
+#    sleep 10
+
 - name: Install minimal packages
   package:
     name: "{{ cilium_pkg_require }}"

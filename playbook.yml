@@ -1,4 +1,5 @@
 - name: kubernetes
+  any_errors_fatal: true
   hosts:
     - k8s_masters
     - k8s_nodes

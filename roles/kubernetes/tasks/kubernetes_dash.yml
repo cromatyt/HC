@@ -1,0 +1,40 @@
+## A tester
+# Add kubernetes-dashboard repository
+#helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+#helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard
+
+- name: Instal Kubernetes Dashboard
+  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+
+## Expose
+# kubectl port-forward -n kubernetes-dashboard service/kubernetes-dashboard 8080:443 --address 0.0.0.0
+# browser => https:${MASTER_IP}:8080
+
+## Need tocken ?
+## Create a service account
+
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  name: admin-user
+#  namespace: kubernetes-dashboard
+
+## Create a cluster role binding
+
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: ClusterRoleBinding
+#metadata:
+#  name: admin-user
+#roleRef:
+#  apiGroup: rbac.authorization.k8s.io
+#  kind: ClusterRole
+#  name: cluster-admin
+#subjects:
+#- kind: ServiceAccount
+#  name: admin-user
+#  namespace: kubernetes-dashboard
+
+## Get bearer token
+
+#kubectl -n kubernetes-dashboard create token admin-user
